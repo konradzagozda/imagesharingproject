@@ -1,3 +1,4 @@
+import uuid as uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
@@ -35,23 +36,17 @@ class Tier(TimestampedModel):
         return self.name
 
 
-class Image(TimestampedModel):
+class OriginalImage(TimestampedModel):
+    uuid = models.UUIDField(primary_key = True, default = uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100, help_text='helps user identify his image', null=True)
     owner = models.ForeignKey(User, null=True, on_delete=models.SET_NULL) # if user is deleted, data could be accessible
-    image = models.ImageField(upload_to='images')
-
-    class Meta:
-        abstract = True
+    image = models.ImageField(upload_to='userdata/images/original')
 
 
-class OriginalImage(Image):
-    """
-    User uses this model to import an image.
-    """
-    pass
-
-
-class ThumbnailImage(Image):
+class ThumbnailImage(TimestampedModel):
     """
     When first fetched, API creates ThumbnailImages for performance later.
     """
     size = models.ForeignKey(ThumbnailSize, on_delete=models.PROTECT)
+    image = models.ImageField(upload_to='userdata/images/thumbnails')
+    original = models.ForeignKey(OriginalImage, on_delete=models.CASCADE)
