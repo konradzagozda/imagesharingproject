@@ -22,6 +22,7 @@ class ThumbnailSize(TimestampedModel):
 
 
 class Tier(TimestampedModel):
+    name = models.CharField(max_length=30)
     thumbnail_sizes = models.ManyToManyField(ThumbnailSize)
     expiring_links = models.BooleanField(help_text='ability to generate short-lived links', default=False)
     original_image = models.BooleanField(help_text='ability to get original-size image', default=False)
