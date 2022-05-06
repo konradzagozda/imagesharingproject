@@ -17,3 +17,4 @@ It's good practice to override User model but, it's not necessary here, but tier
 ### Performance considerations
 
 We shouldn't compute thumbnails every time a request is made for it, probably the best idea is to use in-memory-database like redis.
+Once computed thumbnail, it should be saved for future use.
