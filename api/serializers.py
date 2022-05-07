@@ -25,9 +25,3 @@ class OriginalImageSerializer(serializers.ModelSerializer):
             links[str(size)] = f'{base_url}{obj.pk}/?height={size.height}'
 
         return links
-
-
-# class ThumbnailImageSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = ThumbnailImage
-#         fields = ['id', 'owner', 'image', 'size']

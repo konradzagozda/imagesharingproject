@@ -11,6 +11,7 @@ from django.http import StreamingHttpResponse, HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, permissions
 from rest_framework.exceptions import ParseError
+from rest_framework.mixins import CreateModelMixin
 from rest_framework.response import Response
 
 from api.serializers import OriginalImageSerializer
@@ -27,8 +28,10 @@ class ImageViewSetPermission(permissions.BasePermission):
             return True
         return False
 
-class ImageViewSet(viewsets.ViewSet):
+class ImageViewSet(CreateModelMixin, viewsets.GenericViewSet):
     permission_classes = (ImageViewSetPermission,)
+    serializer_class = OriginalImageSerializer
+    queryset = OriginalImage.objects.all()
 
     def list(self, request):
         queryset = OriginalImage.objects.filter(owner=request.user)
@@ -58,15 +61,6 @@ class ImageViewSet(viewsets.ViewSet):
         response['Content-Length'] = image.size
 
         return response
-
-
-    # upload images
-    def create(self, request):
-        try:
-            image = request.data['image']
-        except KeyError:
-            raise ParseError('Request has no resource file attached')
-        product = OriginalImage.objects.create(image=image)
 
     @staticmethod
     def _check_mime(filepath):
