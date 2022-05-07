@@ -23,7 +23,7 @@ class ThumbnailSize(TimestampedModel):
     height = models.IntegerField(help_text='height in pixels')
 
     def __str__(self):
-        return str(self.height) + ' px'
+        return str(self.height) + 'px'
 
 
 class Tier(TimestampedModel):
