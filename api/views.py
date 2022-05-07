@@ -1,5 +1,12 @@
 import mimetypes
+import os
+import sys
+from os import path
 
+import magic
+from PIL import Image
+from django.core.files import File
+from django.db import transaction
 from django.http import StreamingHttpResponse, HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, permissions
@@ -7,7 +14,9 @@ from rest_framework.exceptions import ParseError
 from rest_framework.response import Response
 
 from api.serializers import OriginalImageSerializer
-from imagesharing.models import OriginalImage
+from imagesharing.models import OriginalImage, ThumbnailImage, ThumbnailSize
+
+MAX_WIDTH = 999_999
 
 
 class ImageViewSetPermission(permissions.BasePermission):
@@ -26,30 +35,64 @@ class ImageViewSet(viewsets.ViewSet):
         serializer = OriginalImageSerializer(queryset, many=True)
         return Response(serializer.data)
 
-    # image download.
+    # download image
     def retrieve(self, request, pk=None):
-        # wydaje sie ze mozna latwiej...
         instance = get_object_or_404(OriginalImage, pk=pk)
-        size = request.query_params.get('size')
+        height = request.query_params.get('height')
+        content_type_file = self._check_mime(instance.image.path)
+        ext = mimetypes.guess_extension(content_type_file, strict=True)[1:]
 
-        image = instance.image
-        content_type_file = mimetypes.guess_type(image.path)[0]
-        response = HttpResponse(open(image.path, 'rb'), content_type=content_type_file)
+        if height is not None:
+            # check if thumbnail should be created
+            tier = request.user.tier
+            thumbnail_size = get_object_or_404(tier.thumbnail_sizes, height=height)
+            try:
+                image = ThumbnailImage.objects.get(size=thumbnail_size, original=instance).image
+            except ThumbnailImage.DoesNotExist:
+                image = self._create_thumbnail(int(height), instance, ext).image
+        else:
+            image = instance.image
+
+        response = HttpResponse(image.open(mode='rb'), content_type=content_type_file)
         response['Content-Disposition'] = "attachment; filename=%s" % str(image)
         response['Content-Length'] = image.size
-        if size is not None:
-            # todo return thumbnail
-            pass
-        else:
-            pass
 
         return response
 
 
-    # image upload
+    # upload images
     def create(self, request):
         try:
             image = request.data['image']
         except KeyError:
             raise ParseError('Request has no resource file attached')
         product = OriginalImage.objects.create(image=image)
+
+    @staticmethod
+    def _check_mime(filepath):
+        mime = magic.Magic(mime=True)
+        return mime.from_file(filepath)
+
+    @staticmethod
+    def _create_thumbnail(height, original_image, extension):
+        size = (MAX_WIDTH, height)
+        dir_path = 'images/thumbnails/'
+
+        if not path.exists(dir_path):
+            os.mkdir(dir_path)
+
+        thumbnail_path = f'{dir_path}{original_image.uuid}-{height}.{extension}'
+
+        with Image.open(original_image.image.path) as im:
+            im.thumbnail(size)
+            im.save(thumbnail_path, format=extension)
+
+        thumbnail = ThumbnailImage.objects.create(
+            size=ThumbnailSize.objects.get(height=height),
+            original=original_image,
+            image=thumbnail_path
+        )
+
+        return thumbnail
+
+

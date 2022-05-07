@@ -40,7 +40,7 @@ class OriginalImage(TimestampedModel):
     uuid = models.UUIDField(primary_key = True, default = uuid.uuid4, editable=False)
     name = models.CharField(max_length=100, help_text='helps user identify his image', null=True)
     owner = models.ForeignKey(User, null=True, on_delete=models.SET_NULL) # if user is deleted, data could be accessible
-    image = models.ImageField(upload_to='userdata/images/original')
+    image = models.ImageField(upload_to='images/original')
 
 
 class ThumbnailImage(TimestampedModel):
@@ -48,5 +48,5 @@ class ThumbnailImage(TimestampedModel):
     When first fetched, API creates ThumbnailImages for performance later.
     """
     size = models.ForeignKey(ThumbnailSize, on_delete=models.PROTECT)
-    image = models.ImageField(upload_to='userdata/images/thumbnails')
+    image = models.ImageField()
     original = models.ForeignKey(OriginalImage, on_delete=models.CASCADE)
