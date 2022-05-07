@@ -8,9 +8,6 @@
 
 It is not specified who could use the link - I assumed everyone should, so basically we're building a image sharing service.
 
-Users with Enterprise should have an ability to fetch a link that expires a number of seconds - each image upload for 
-any of tiers, returns set of links thus for simplification each of those links will have expiry time, technically this 
-point is met.
 
 ### Performance considerations
 

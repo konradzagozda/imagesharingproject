@@ -4,7 +4,7 @@ from rest_framework import serializers
 from rest_framework.reverse import reverse
 
 from api.utils import get_mime, get_mime_memory_file
-from imagesharing.models import OriginalImage, ThumbnailImage
+from imagesharing.models import OriginalImage, ThumbnailImage, TemporaryLink
 
 
 class OriginalImageSerializer(serializers.ModelSerializer):
@@ -24,6 +24,22 @@ class OriginalImageSerializer(serializers.ModelSerializer):
 
         for size in tier.thumbnail_sizes.all():
             links[str(size)] = f'{base_url}{obj.pk}/?height={size.height}'
+
+        if tier.expiring_links:
+            temp_array = []
+
+            for link in TemporaryLink.objects.filter(original_image=obj):
+                if link.is_valid:
+                    key = str(link.thumbnail.size) if link.thumbnail else 'orig'
+                    expire = link.termination_datetime
+                    link = f'/api/images/temp/?uuid={link.uuid}'
+
+                    temp_array.append({
+                        key: (expire, link)
+                    })
+
+            links['temp'] = temp_array
+
 
         return links
 

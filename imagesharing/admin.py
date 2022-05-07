@@ -11,5 +11,4 @@ class CustomUserAdmin(UserAdmin):
 
 admin.site.register(ThumbnailSize, ModelAdmin)
 admin.site.register(Tier, ModelAdmin)
-admin.site.register(ThumbnailImage, ModelAdmin)
 admin.site.register(OriginalImage, ModelAdmin)

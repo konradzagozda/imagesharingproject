@@ -1,9 +1,16 @@
+import datetime
 import uuid as uuid
+
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
 
 # base model useful for logging changes
+from django.utils import timezone
+
+
 class TimestampedModel(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -47,6 +54,29 @@ class ThumbnailImage(TimestampedModel):
     """
     When first fetched, API creates ThumbnailImages for performance later.
     """
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     size = models.ForeignKey(ThumbnailSize, on_delete=models.PROTECT)
     image = models.ImageField()
     original = models.ForeignKey(OriginalImage, on_delete=models.CASCADE)
+
+
+class TemporaryLink(TimestampedModel):
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    original_image = models.ForeignKey(OriginalImage, on_delete=models.CASCADE)
+    thumbnail = models.ForeignKey(ThumbnailImage, null=True, blank=True, on_delete=models.CASCADE) # if null it refers to original image
+
+    ttl = models.IntegerField()
+    termination_datetime = models.DateTimeField(null=True, blank=True)
+
+    @property
+    def is_valid(self):
+        now = timezone.now()
+        return now < self.termination_datetime
+
+    def save(self, *args, **kwargs):
+        if not self.termination_datetime:
+            self.termination_datetime = datetime.datetime.now() + datetime.timedelta(seconds=self.ttl)
+        super().save(*args, **kwargs)
+
+    # /images/temp?uuid=<uuid>
