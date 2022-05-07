@@ -53,27 +53,107 @@ class APITestCase(APITestCase):
         for size in ('400px', 'orig'):
             self.assertTrue(size not in links)
 
-        #todo
-        pass
+        uuid = res.data[0]['uuid']
+
+        orig_link = f'/api/images/{uuid}/'
+
+        res = self.client.get(orig_link)
+        self.assertEqual(404, res.status_code)
+
+        res = self.client.get(f'{orig_link}?height=200')
+        self.assertEqual(200, res.status_code)
+
+        res = self.client.get(f'{orig_link}?height=400')
+        self.assertEqual(404, res.status_code)
+
+        res = self.client.get(f'{orig_link}get_temp_link/?ttl=300')
+        self.assertEqual(403, res.status_code)
 
     def test_premium_tier(self):
         # access to 200 / 400 / original
         # no access to get_temp_link action
-        pass
+        self.client.login(username='premium', password='premium')
+        self._upload_test_images(self.client)
+        res = self.client.get('/api/images/')
+        links = res.data[0]['links']
+        for size in ('200px', '400px', 'orig'):
+            self.assertTrue(size in links)
+
+        uuid = res.data[0]['uuid']
+
+        orig_link = f'/api/images/{uuid}/'
+
+        res = self.client.get(orig_link)
+        self.assertEqual(200, res.status_code)
+
+        res = self.client.get(f'{orig_link}?height=200')
+        self.assertEqual(200, res.status_code)
+
+        res = self.client.get(f'{orig_link}?height=400')
+        self.assertEqual(200, res.status_code)
+
+        res = self.client.get(f'{orig_link}get_temp_link/?ttl=300')
+        self.assertEqual(403, res.status_code)
+
+
 
     def test_enterprise_tier(self):
         # access to 200 / 400 / original / get_temp_link action
-        pass
+        self.client.login(username='enterprise', password='enterprise')
+        self._upload_test_images(self.client)
+        res = self.client.get('/api/images/')
+        links = res.data[0]['links']
+        for size in ('200px', '400px', 'orig'):
+            self.assertTrue(size in links)
+
+        self.assertTrue('temp' in links)
+
+        uuid = res.data[0]['uuid']
+
+        orig_link = f'/api/images/{uuid}/'
+
+        res = self.client.get(orig_link)
+        self.assertEqual(200, res.status_code)
+
+        res = self.client.get(f'{orig_link}?height=200')
+        self.assertEqual(200, res.status_code)
+
+        res = self.client.get(f'{orig_link}?height=400')
+        self.assertEqual(200, res.status_code)
+
+        res = self.client.get(f'{orig_link}get_temp_link/?ttl=300')
+        self.assertEqual(200, res.status_code)
 
     def test_temporary_links(self):
         # ttl < 300 fails
         # ttl > 30_000 fails
-        pass
+        # 300 =< ttl =< 30_000 ok
+        # can download image using temporary link
 
+        self.client.login(username='enterprise', password='enterprise')
+        self._upload_test_images(self.client)
+        res = self.client.get('/api/images/')
+        links = res.data[0]['links']
 
-    def test_custom_tier(self):
-        # create tier with only 350 size
-        pass
+        uuid = res.data[0]['uuid']
+
+        orig_link = f'/api/images/{uuid}/'
+
+        res = self.client.get(f'{orig_link}get_temp_link/?ttl=299')
+        self.assertEqual(400, res.status_code)
+
+        res = self.client.get(f'{orig_link}get_temp_link/?ttl=30001')
+        self.assertEqual(400, res.status_code)
+
+        res = self.client.get(f'{orig_link}get_temp_link/?ttl=300')
+        self.assertEqual(200, res.status_code)
+        temp_link = res.data['link']
+        res = self.client.get(temp_link)
+        self.assertEqual(200, res.status_code)
+
+        self.client.logout()
+        res = self.client.get(temp_link)
+        self.assertEqual(200, res.status_code)
 
 
     @staticmethod
