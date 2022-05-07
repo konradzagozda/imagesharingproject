@@ -5,19 +5,17 @@ from os import path
 
 import magic
 from PIL import Image
-from django.core.files import File
-from django.db import transaction
-from django.http import StreamingHttpResponse, HttpResponse
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, permissions
-from rest_framework.exceptions import ParseError
 from rest_framework.mixins import CreateModelMixin
 from rest_framework.response import Response
 
 from api.serializers import OriginalImageSerializer
+from api.utils import get_mime
 from imagesharing.models import OriginalImage, ThumbnailImage, ThumbnailSize
 
-MAX_WIDTH = 999_999
+MAX_WIDTH = 999_999_999
 
 
 class ImageViewSetPermission(permissions.BasePermission):
@@ -27,6 +25,7 @@ class ImageViewSetPermission(permissions.BasePermission):
         if view.action == 'retrieve':
             return True
         return False
+
 
 class ImageViewSet(CreateModelMixin, viewsets.GenericViewSet):
     permission_classes = (ImageViewSetPermission,)
@@ -42,7 +41,7 @@ class ImageViewSet(CreateModelMixin, viewsets.GenericViewSet):
     def retrieve(self, request, pk=None):
         instance = get_object_or_404(OriginalImage, pk=pk)
         height = request.query_params.get('height')
-        content_type_file = self._check_mime(instance.image.path)
+        content_type_file = get_mime(instance.image.path)
         ext = mimetypes.guess_extension(content_type_file, strict=True)[1:]
 
         if height is not None:
@@ -62,10 +61,9 @@ class ImageViewSet(CreateModelMixin, viewsets.GenericViewSet):
 
         return response
 
-    @staticmethod
-    def _check_mime(filepath):
-        mime = magic.Magic(mime=True)
-        return mime.from_file(filepath)
+    def perform_create(self, serializer):
+        print(serializer)
+        serializer.save()
 
     @staticmethod
     def _create_thumbnail(height, original_image, extension):
