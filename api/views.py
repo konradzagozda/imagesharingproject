@@ -141,7 +141,8 @@ class ImageViewSet(CreateModelMixin, viewsets.GenericViewSet):
 
         with Image.open(original_image.image.path) as im:
             im.thumbnail(size)
-            im.save(thumbnail_path, format=extension)
+            format = 'jpeg' if extension == 'jpg' else extension
+            im.save(thumbnail_path, format=format)
 
         thumbnail = ThumbnailImage.objects.create(
             size=ThumbnailSize.objects.get(height=height),
