@@ -49,7 +49,7 @@ class ImageViewSet(CreateModelMixin, viewsets.GenericViewSet):
         height = request.query_params.get('height')
         content_type_file = get_mime(instance.image.path)
         ext = mimetypes.guess_extension(content_type_file, strict=True)[1:]
-        tier = request.user.tier
+        tier = instance.owner.tier
 
         if height is not None:
             # check if thumbnail should be created

@@ -20,6 +20,7 @@
 
 ## API overview
 
+- `POST /api/images/` - upload image
 - `GET /api/images/`  lists your uploaded images with links available to current tier + temporary links if they were set up.
 - `GET /api/images/<uuid>` downloads original-sized image if it's available 
 - `GET /api/images/<uuid>/?height=<height>` downloads thumbnail with certain height if available
