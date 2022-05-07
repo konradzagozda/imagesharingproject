@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-i8+kvw)vnk6-$uqjcfr@1kjqu5_$akwuw(vg$vfqd%(rxk$07m
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -78,11 +78,14 @@ WSGI_APPLICATION = 'imagesharingproject.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': "django.db.backends.postgresql",
+        'NAME': 'company_tasks',
+        'USER': 'postgres',
+        'PASSWORD': 'postgres',
+        'HOST': 'db', # db - postgres container name specified in docker-compose.yml
+        'PORT': '5432',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
