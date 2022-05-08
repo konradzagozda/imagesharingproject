@@ -1,4 +1,4 @@
-# Backend (Django) Developer - Images - recruitment task for hexocean
+# Image Sharing Service
 
 ## Quickstart
 
